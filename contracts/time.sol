@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity 0.7.5;
+pragma solidity ^0.8.19;
 
 library LowGasSafeMath {
     /// @notice Returns x + y, reverts if sum overflows uint256
@@ -352,7 +352,7 @@ library Address {
     }
 
     function addressToString(address _address) internal pure returns(string memory) {
-        bytes32 _bytes = bytes32(uint256(_address));
+        bytes32 _bytes = bytes32(uint256(uint160(_address)));
         bytes memory HEX = "0123456789abcdef";
         bytes memory _addr = new bytes(42);
 

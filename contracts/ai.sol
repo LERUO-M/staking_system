@@ -21,7 +21,7 @@ contract StakingContract is Ownable, ReentrancyGuard, Pausable {
     uint256 public totalStaked;
     
     // Staking duration
-    uint256 public stakingDuration = 30 days;
+    uint256 public stakingDuration = 10 seconds;
     
     // Maps
     mapping(address => uint256) public stakedBalance;
@@ -55,6 +55,7 @@ contract StakingContract is Ownable, ReentrancyGuard, Pausable {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = block.timestamp;
         
+        // A reversion here would have stopped the whole execution!
         if (account != address(0)) {
             rewards[account] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;

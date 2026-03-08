@@ -114,14 +114,14 @@ contract TieredStaking is Ownable, ReentrancyGuard {
 
     // Calculate rewards for a specific stake
     function calculateRewards(address user, uint256 stakeIndex) public view returns (uint256) {
-        StakeInfo memory stake = userStakes[user][stakeIndex];
-        StakingTier memory tier = tiers[stake.tierId];
+        StakeInfo memory staket = userStakes[user][stakeIndex];
+        StakingTier memory tier = tiers[staket.tierId];
         
-        uint256 timeStaked = block.timestamp - stake.lastClaimed;
-        uint256 baseReward = stake.amount * baseRewardRate * timeStaked / 1e18;
+        uint256 timeStaked = block.timestamp - staket.lastClaimed;
+        uint256 baseReward = staket.amount * baseRewardRate * timeStaked / 1e18;
         uint256 multipliedReward = baseReward * tier.rewardMultiplier / 10000;
         
-        return multipliedReward + stake.pendingRewards;
+        return multipliedReward + staket.pendingRewards;
     }
 
     // Claim rewards for a specific stake
@@ -143,10 +143,10 @@ contract TieredStaking is Ownable, ReentrancyGuard {
     function withdrawStake(uint256 stakeIndex) external nonReentrant {
         require(stakeIndex < userStakes[msg.sender].length, "Invalid stake");
         
-        StakeInfo memory stake = userStakes[msg.sender][stakeIndex];
-        StakingTier memory tier = tiers[stake.tierId];
+        StakeInfo memory stake1 = userStakes[msg.sender][stakeIndex];
+        StakingTier memory tier = tiers[stake1.tierId];
         
-        require(block.timestamp >= stake.stakedAt + tier.lockDuration, "Stake still locked");
+        require(block.timestamp >= stake1.stakedAt + tier.lockDuration, "Stake still locked");
         
         // Calculate and pay pending rewards
         uint256 rewards = calculateRewards(msg.sender, stakeIndex);
@@ -155,17 +155,17 @@ contract TieredStaking is Ownable, ReentrancyGuard {
         }
         
         // Update totals
-        totalUserStaked[msg.sender] -= stake.amount;
-        totalStaked -= stake.amount;
+        totalUserStaked[msg.sender] -= stake1.amount;
+        totalStaked -= stake1.amount;
         
         // Remove stake from array
         userStakes[msg.sender][stakeIndex] = userStakes[msg.sender][userStakes[msg.sender].length - 1];
         userStakes[msg.sender].pop();
         
         // Return staked tokens
-        stakingToken.safeTransfer(msg.sender, stake.amount);
+        stakingToken.safeTransfer(msg.sender, stake1.amount);
         
-        emit Withdrawn(msg.sender, stake.amount, stakeIndex);
+        emit Withdrawn(msg.sender, stake1.amount, stakeIndex);
     }
 
     // Get user stakes
