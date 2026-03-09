@@ -149,26 +149,48 @@ describe("Running tests for owner setting the state variables in the contract", 
 
     it("Only the owner should be able to set the staking duration", async function () {         
         const { tokenstaked, owner } = await loadFixture(deployContract);
+
+        const stakingTime = 34;
+        await tokenstaked.connect(owner).setStakingDuration(stakingTime);
+        expect(await tokenstaked.stakingDuration()).to.equal(stakingTime);
     });
     
     it("User should not be able to set the staking duration", async function () {         
-        const { tokenstaked, owner } = await loadFixture(deployContract);
+        const { tokenstaked, user1 } = await loadFixture(deployContract);
+        const stakingTime = 34;
+
+        expect(tokenstaked.connect(user1).setStakingDuration(stakingTime)).to.be.revertedWith("Ownable: caller is not the owner");
+   
     });
 
     it("Only the owner should be able to pause staking", async function () {         
         const { tokenstaked, owner } = await loadFixture(deployContract);
+
+        await tokenstaked.connect(owner).pause();
+        expect(await tokenstaked.paused()).to.equal(true);
     });
     
     it("User should not be able to set pause staking", async function () {         
-        const { tokenstaked, owner } = await loadFixture(deployContract);
+        const { tokenstaked, owner, user1 } = await loadFixture(deployContract);
+
+        expect(tokenstaked.connect(user1).pause()).to.be.revertedWith("Ownable: caller is not the owner") ;        
     });    
 
     it("Only the owner should be able to unpause staking", async function () {         
         const { tokenstaked, owner } = await loadFixture(deployContract);
+
+        await tokenstaked.pause();
+        expect(await tokenstaked.paused()).to.equal(true);
+
+        await tokenstaked.connect(owner).unpause();
+        expect(await tokenstaked.paused()).to.equal(false);
     });
     
     it("User should not be able to set unpause staking", async function () {         
-        const { tokenstaked, owner } = await loadFixture(deployContract);
+        const { tokenstaked, owner, user1 } = await loadFixture(deployContract);
+
+        expect(tokenstaked.connect(user1).unpause()).to.be.revertedWith("Ownable: caller is not the owner") ;        
+    
     });              
 });
      
