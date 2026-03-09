@@ -62,7 +62,7 @@ describe("Running tests for the staking/unstaking of tokens in the contract", fu
         expect(balance).to.equal(amountToStake);
     });
 
-    it("Should not allow a user to unstake if still in cooldown period", async function () {
+    it("Should not allow a user to unstake/withdraw if still in cooldown period", async function () {
         const { tokenstaked, stakingToken, owner, user1 } = await loadFixture(deployContract);
         
         // Owner transfers 100 tokens to User1 so they have something to stake
@@ -84,7 +84,7 @@ describe("Running tests for the staking/unstaking of tokens in the contract", fu
         await expect(tokenstaked.connect(user1).withdraw(amountToStake)).to.be.revertedWith("Still locked");
     });
 
-    it("Should allow a user to unstake if cooldown period is over", async function () {
+    it("Should allow a user to unstake/withdraw if cooldown period is over", async function () {
         const { tokenstaked, stakingToken, owner, user1 } = await loadFixture(deployContract);
         
         // Owner transfers 100 tokens to User1 so they have something to stake
@@ -113,6 +113,33 @@ describe("Running tests for the staking/unstaking of tokens in the contract", fu
         const balanceAfterWithdrawal = await tokenstaked.stakedBalance(user1.address);
         expect(balanceAfterWithdrawal).to.equal(0);
     });
+
+    it("Emergency withdraw should NOT give user back any tokens if never staked", async function () {         
+        const { tokenstaked, user1 } = await loadFixture(deployContract);
+        expect(tokenstaked.connect(user1).emergencyWithdraw()).to.be.revertedWith("No tokens staked")
+    });       
+
+    it("Emergency withdraw should give user back all their staked tokens and no reward tokens", async function () {         
+        const { tokenstaked, stakingToken, owner, user1 } = await loadFixture(deployContract);
+        
+        // Owner transfers 100 tokens to User1 so they have something to stake
+        const amountToStake = ethers.parseUnits("100", 18);
+        await stakingToken.connect(owner).transfer(user1.address, amountToStake);
+
+
+        // User1 must Approve the staking contract to spend their tokens
+        await stakingToken.connect(user1).approve(await tokenstaked.getAddress(), amountToStake);
+
+        // User1 stakes the tokens
+        await expect(tokenstaked.connect(user1).stake(amountToStake)).not.to.be.reverted;
+
+        // Now that we have staked, let cooldown pass and try emergency withdrawal.
+        await time.increase(35);
+        await expect(tokenstaked.connect(user1).emergencyWithdraw()).not.to.be.reverted;
+
+
+    });       
+
 
 });
 
