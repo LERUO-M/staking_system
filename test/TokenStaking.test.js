@@ -146,11 +146,33 @@ describe("Running tests for the staking/unstaking of tokens in the contract", fu
 describe("Running tests for the rewarding of tokens in the contract", function() {
 
     it("Only the owner should be able to fund the contract with reward tokens", async function () {         
-        const { tokenstaked, owner } = await loadFixture(deployContract);
+        const { tokenstaked, owner, rewardToken } = await loadFixture(deployContract);
+        
+        await rewardToken.approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
+
+
+        // Owner should create the tokens and send them to the contract
+        const amountToFund = ethers.parseUnits("1000", 18);
+        await tokenstaked.fundRewards(amountToFund);
+
+        //balanceOf contract
+        const contractBalance = await rewardToken.balanceOf(await tokenstaked.getAddress());
+        expect(contractBalance).to.equal(amountToFund);
+
+
     });
     
     it("User should not be able to fund the contract with reward tokens", async function () {         
-        const { tokenstaked, owner } = await loadFixture(deployContract);
+        const { tokenstaked, user1, rewardToken, owner } = await loadFixture(deployContract);
+        
+        await rewardToken.connect(owner).approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
+
+
+        // Owner should create the tokens and send them to the contract
+        const amountToFund = ethers.parseUnits("1000", 18);
+        
+        
+        expect(tokenstaked.connect(user1).fundRewards(amountToFund)).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it("", async function () {         
