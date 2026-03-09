@@ -8,3 +8,4 @@
 4. Deploy the contract and check if ti works
 5. Create a front-end to interact with this staking contract.
 6. Understand ALL the contracts.
+
