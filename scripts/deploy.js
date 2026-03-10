@@ -27,7 +27,7 @@ async function main() {
 
   // 3. Deploy the Staking Contract
   // rewardRate: 1 token per hour
-  const rewardRate = ethers.parseUnits("0.0002777777777777777777", 18);
+  const rewardRate = ethers.parseUnits("0.00027777", 18);
 
   const StakingContractNFT = await ethers.getContractFactory("StakingContractNFT");
   const stakingContract = await StakingContractNFT.deploy(nftAddress, rewardTokenAddress, rewardRate);
@@ -37,6 +37,9 @@ async function main() {
 
   // 4. Initial Setup: Fund the staking contract with reward tokens
   const fundAmount = ethers.parseUnits("10000", 18);
+  await rewardToken.approve(stakingAddress, fundAmount);
+  await rewardToken.transfer(stakingAddress, fundAmount);
+  console.log("Reward tokens transferred to staking contract.");
   await stakingContract.fundRewards(fundAmount);
   console.log("Staking contract funded with reward tokens. Lets cook!");
 }

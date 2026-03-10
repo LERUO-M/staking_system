@@ -22,7 +22,11 @@ module.exports = {
     },
     hardhat: {
       // For local testing
-    },
+    },  
+  },
+  etherscan: {
+    // Your Etherscan API Key
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
   solidity: {
     version: "0.8.19",
