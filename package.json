@@ -13,6 +13,8 @@
     "@account-abstraction/contracts": "^0.6.0",
     "@openzeppelin/contracts": "^4.2.0",
     "dotenv": "^16.4.1",
+    "ethers": "^6.16.0",
+    "framer-motion": "^12.35.2",
     "hardhat": "^2.19.4"
   },
   "devDependencies": {
