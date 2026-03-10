@@ -175,8 +175,74 @@ describe("Running tests for the rewarding of tokens in the contract", function()
         expect(tokenstaked.connect(user1).fundRewards(amountToFund)).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
-    it("", async function () {         
-    });    
+    it("The contract should give the correct reward per token", async function () {         
+        const { tokenstaked, rewardToken, owner, user1, stakingToken } = await loadFixture(deployContract);
+        await rewardToken.connect(owner).approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
+
+        // Owner should create the tokens and send them to the contract
+        const amountToFund = ethers.parseUnits("1000", 18);
+        await tokenstaked.fundRewards(amountToFund);
+        
+        // User must stake now and then we can test the functionality
+        const amountToStake = ethers.parseUnits("1000", 18);
+        await stakingToken.connect(owner).transfer(user1.address, amountToStake);
+        await stakingToken.connect(user1).approve(await tokenstaked.getAddress(), amountToStake);
+        await tokenstaked.connect(user1).stake(amountToStake);
+        await time.increase(35);
+
+        const rewardPerToken = await tokenstaked.rewardPerToken();
+        expect(rewardPerToken).to.be.greaterThanOrEqual(ethers.parseUnits("0.0035", 18));
+        
+        
+    });  
+
+    it("It should calculate the rewards earned for an account correctly", async function () {     
+        const { tokenstaked, rewardToken, owner, user1, stakingToken } = await loadFixture(deployContract);
+        await rewardToken.connect(owner).approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
+
+        // Owner should create the tokens and send them to the contract
+        const amountToFund = ethers.parseUnits("1000", 18);
+        await tokenstaked.fundRewards(amountToFund);
+        
+        // User must stake now and then we can test the functionality
+        const amountToStake = ethers.parseUnits("1000", 18);
+        await stakingToken.connect(owner).transfer(user1.address, amountToStake);
+        await stakingToken.connect(user1).approve(await tokenstaked.getAddress(), amountToStake);
+        await tokenstaked.connect(user1).stake(amountToStake);
+        await time.increase(40);
+
+        const rewardsEarnedByAcc = await tokenstaked.earned(user1.address);   
+        expect(rewardsEarnedByAcc).to.be.greaterThan(ethers.parseUnits("0.0040", 18));
+        
+    });  
+    
+    it("Users should be able to withdraw their rewards only", async function () {        
+        // Should stake and then attempt to withdraw
+        const { tokenstaked, rewardToken, owner, user1, stakingToken } = await loadFixture(deployContract);
+        await rewardToken.connect(owner).approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
+        await rewardToken.connect(owner).transfer(user1.address, ethers.parseUnits("10", 18));
+        // Owner should create the tokens and send them to the contract
+        const amountToFund = ethers.parseUnits("1000", 18);
+        await tokenstaked.fundRewards(amountToFund);
+        
+        // User must stake now and then we can test the functionality
+        const amountToStake = ethers.parseUnits("1000", 18);
+        await stakingToken.connect(owner).transfer(user1.address, amountToStake);
+        await stakingToken.connect(user1).approve(await tokenstaked.getAddress(), amountToStake);
+        await tokenstaked.connect(user1).stake(amountToStake);
+        await time.increase(40);
+
+        await tokenstaked.connect(user1).getReward();
+
+        //Expect the balance of user to be updated with the new token
+        expect(await rewardToken.balanceOf(user1.address)).to.be.greaterThanOrEqual(ethers.parseUnits("10.0040", 18));
+    }); 
+
+    it("Users should be able to withdraw and get rewards simualtaneously", async function () { 
+
+    });
+
+
 }); 
 
 describe("Running tests for owner setting the state variables in the contract", function() {
@@ -242,5 +308,8 @@ describe("Running tests for owner setting the state variables in the contract", 
     
     });              
 });
-     
+   
+
+    // it("", async function () {         
+    // });    
 
