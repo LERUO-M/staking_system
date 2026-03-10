@@ -10,8 +10,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract StakingContractNFT is Ownable, ReentrancyGuard, Pausable {
-    using IERC20 for IERC20;
-    using IERC721 for IERC721;
+    using SafeERC20 for IERC20;
 
     IERC20 public rewardToken;
     IERC721 public NFTsBeingStaked;
@@ -40,7 +39,6 @@ contract StakingContractNFT is Ownable, ReentrancyGuard, Pausable {
         NFTsBeingStaked = IERC721(_NFTbeingStaked);
         rewardToken = IERC20(_rewardToken);
         rewardRate = _rewardRate;
-        lastUpdateTime[msg.sender] = block.timestamp;
     }
 
     // Update rewards a user has before updating block.timestamp
