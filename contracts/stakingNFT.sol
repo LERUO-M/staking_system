@@ -19,12 +19,13 @@ contract StakingContractNFT is Ownable, ReentrancyGuard, Pausable {
     // Staking variables
     uint256 public rewardRate;
     uint256 public totalStaked;
+    uint256 public stakingDuration = 30 seconds;
     
 
     // Mapping
     mapping(uint256 => address) public nftOwners;
     mapping(address => uint256) public stakedBalance; // How much 1 user has staked
-    mapping(address => uint256) public stakingTimestamp;
+    mapping(uint256 => uint256) public nftStakingTimestamp;
     mapping(address => uint256) public lastUpdateTime;
     mapping(address => uint256) public rewards;
 
@@ -65,9 +66,36 @@ contract StakingContractNFT is Ownable, ReentrancyGuard, Pausable {
 
         
 
-        // 3. Record the start time for reward math
-        stakingTimestamp[msg.sender] = block.timestamp;
+        // Record the start time for reward math
+        nftStakingTimestamp[_tokenId] = block.timestamp;
         
         emit NFTStaked(msg.sender, _tokenId);
     }
+
+    function withdraw(uint256 _tokenId) external nonReentrant updateReward(msg.sender) {
+        require(nftOwners[_tokenId] == msg.sender, "Not the owner of this staked NFT");
+        require(block.timestamp >= nftStakingTimestamp[_tokenId] + stakingDuration, "Still locked");
+        
+
+        totalStaked -= 1;
+        stakedBalance[msg.sender] -= 1;
+
+        // Delete the owner 
+        delete nftOwners[_tokenId];
+        delete nftStakingTimestamp[_tokenId];
+
+        // Send the NFT from this contract back to the user
+        NFTsBeingStaked.transferFrom(address(this), msg.sender, _tokenId);
+        emit Unstaked(msg.sender, _tokenId);
+    }   
+
+    // Get reward
+    function getReward() public nonReentrant updateReward(msg.sender) {
+        uint256 reward = rewards[msg.sender];
+        if (reward > 0) {
+            rewards[msg.sender] = 0;
+            rewardToken.safeTransfer(msg.sender, reward);
+            emit RewardPaid(msg.sender, reward);
+        }
+    } 
 }
