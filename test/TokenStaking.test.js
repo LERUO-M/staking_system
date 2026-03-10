@@ -239,6 +239,26 @@ describe("Running tests for the rewarding of tokens in the contract", function()
     }); 
 
     it("Users should be able to withdraw and get rewards simualtaneously", async function () { 
+        const { tokenstaked, rewardToken, owner, user1, stakingToken } = await loadFixture(deployContract);
+        await rewardToken.connect(owner).approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
+        await rewardToken.connect(owner).transfer(user1.address, ethers.parseUnits("10", 18));
+        // Owner should create the tokens and send them to the contract
+        const amountToFund = ethers.parseUnits("1000", 18);
+        await tokenstaked.fundRewards(amountToFund);
+        
+        // User must stake now and then we can test the functionality
+        const amountToStake = ethers.parseUnits("1000", 18);
+        await stakingToken.connect(owner).transfer(user1.address, amountToStake);
+        await stakingToken.connect(user1).approve(await tokenstaked.getAddress(), amountToStake);
+        await tokenstaked.connect(user1).stake(amountToStake);
+        await time.increase(400);
+
+        await tokenstaked.connect(user1).withdrawAndGetReward();
+
+        expect(await stakingToken.balanceOf(user1.address)).to.equal(amountToStake);
+        expect(await rewardToken.balanceOf(user1.address)).to.be.greaterThanOrEqual(ethers.parseUnits("10.04", 18));
+
+        
 
     });
 
