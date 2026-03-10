@@ -115,36 +115,57 @@ describe("Running tests for the staking/unstaking of the NFT in the contract", f
         await expect(StakingContract.connect(user1).withdraw(1)).not.to.be.reverted;
 
         // Check balance of StakedContract
-        const balanceAfterWithdrawal = await NFTtoStake.balanceOf(await StakingContract.getAddress());
+        const balanceAfterWithdrawal = await NFTtoStake.balanceOf(stakingAddress);
         expect(balanceAfterWithdrawal).to.equal(0);
     
     });
 
-    // it("Emergency withdraw should NOT give user back any tokens if never staked", async function () {         
-    //     const { tokenstaked, user1 } = await loadFixture(deployContractNFT);
-    //     expect(tokenstaked.connect(user1).emergencyWithdraw()).to.be.revertedWith("No tokens staked")
-    // });       
-
-    // it("Emergency withdraw should give user back all their staked tokens and no reward tokens", async function () {         
-    //     const { tokenstaked, stakingToken, owner, user1 } = await loadFixture(deployContractNFT);
+    it("Emergency withdraw should NOT work if user doesnt own NFT", async function () {         
+        const { NFTtoStake, user1, StakingContract, owner } = await loadFixture(deployContractNFT);
         
-    //     // Owner transfers 100 tokens to User1 so they have something to stake
-    //     const amountToStake = ethers.parseUnits("100", 18);
-    //     await stakingToken.connect(owner).transfer(user1.address, amountToStake);
+        // Mint and pay the cost
+        const mintCost = await NFTtoStake.cost();
+        await NFTtoStake.connect(user1).mint(1, { value: mintCost });
 
+        // APPROVE
+        const stakingAddress = await StakingContract.getAddress();
+        await NFTtoStake.connect(user1).approve(stakingAddress, 1);
 
-    //     // User1 must Approve the staking contract to spend their tokens
-    //     await stakingToken.connect(user1).approve(await tokenstaked.getAddress(), amountToStake);
+        // Stake the NFT
+        await StakingContract.connect(user1).stake(1);
+        await time.increase(35);
 
-    //     // User1 stakes the tokens
-    //     await expect(tokenstaked.connect(user1).stake(amountToStake)).not.to.be.reverted;
+        // Now the withdrawal should succeed
+        await expect(StakingContract.connect(user1).withdraw(1)).not.to.be.reverted;
+    });       
 
-    //     // Now that we have staked, let cooldown pass and try emergency withdrawal.
-    //     await time.increase(35);
-    //     await expect(tokenstaked.connect(user1).emergencyWithdraw()).not.to.be.reverted;
+    it("Emergency withdraw should give user back all their staked tokens and no reward tokens", async function () {         
+        const { NFTtoStake, user1, StakingContract, rewardToken, owner} = await loadFixture(deployContractNFT);
 
+        const stakingAddress = await StakingContract.getAddress();
 
-    // });       
+        // Deposit reward tokens to the Contract
+        const amountToFund = ethers.parseUnits("10", 18);
+        await rewardToken.connect(owner).approve(stakingAddress, amountToFund);
+
+        await rewardToken.connect(owner).transfer(stakingAddress, amountToFund);
+        
+        // Mint and pay the cost
+        const mintCost = await NFTtoStake.cost();
+        await NFTtoStake.connect(user1).mint(1, { value: mintCost });
+
+        // APPROVE
+        await NFTtoStake.connect(user1).approve(stakingAddress, 1);
+
+        // Stake the NFT
+        await StakingContract.connect(user1).stake(1);
+        expect(StakingContract.connect(user1).emergencyWithdraw(1));
+
+        // The reward tokens in the contract should not change
+        const contractBalance = await rewardToken.balanceOf(stakingAddress);
+        expect(contractBalance).to.equal(amountToFund);
+    
+    });      
 
 
 });
