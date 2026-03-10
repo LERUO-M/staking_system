@@ -170,135 +170,107 @@ describe("Running tests for the staking/unstaking of the NFT in the contract", f
 
 });
 
-// describe("Running tests for the rewarding of tokens in the contract", function() {
+describe("Running tests for the rewarding of tokens in the contract", function() {
 
-//     it("Only the owner should be able to fund the contract with reward tokens", async function () {         
-//         const { tokenstaked, owner, rewardToken } = await loadFixture(deployContractNFT);
+    it("Only the owner should be able to fund the contract with reward tokens", async function () {         
+        const { StakingContract, rewardToken } = await loadFixture(deployContractNFT);
         
-//         await rewardToken.approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
+        await rewardToken.approve(await StakingContract.getAddress(), ethers.parseUnits("10", 18));
 
 
-//         // Owner should create the tokens and send them to the contract
-//         const amountToFund = ethers.parseUnits("1000", 18);
-//         await tokenstaked.fundRewards(amountToFund);
+        // Owner should create the tokens and send them to the contract
+        const amountToFund = ethers.parseUnits("10", 18);
+        await StakingContract.fundRewards(amountToFund);
 
-//         //balanceOf contract
-//         const contractBalance = await rewardToken.balanceOf(await tokenstaked.getAddress());
-//         expect(contractBalance).to.equal(amountToFund);
+        //balanceOf contract
+        const contractBalance = await rewardToken.balanceOf(await StakingContract.getAddress());
+        expect(contractBalance).to.equal(amountToFund);
 
 
-//     });
+    });
     
-//     it("User should not be able to fund the contract with reward tokens", async function () {         
-//         const { tokenstaked, user1, rewardToken, owner } = await loadFixture(deployContractNFT);
+    it("User should not be able to fund the contract with reward tokens", async function () {         
+        const { StakingContract, user1, rewardToken, owner } = await loadFixture(deployContractNFT);
         
-//         await rewardToken.connect(owner).approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
+        await rewardToken.connect(owner).approve(await StakingContract.getAddress(), ethers.parseUnits("100", 18));
 
 
-//         // Owner should create the tokens and send them to the contract
-//         const amountToFund = ethers.parseUnits("1000", 18);
+        // Owner should create the tokens and send them to the contract
+        const amountToFund = ethers.parseUnits("100", 18);
         
         
-//         expect(tokenstaked.connect(user1).fundRewards(amountToFund)).to.be.revertedWith("Ownable: caller is not the owner");
-//     });
+        expect(StakingContract.connect(user1).fundRewards(amountToFund)).to.be.revertedWith("Ownable: caller is not the owner");
+    });
 
-//     it("The contract should give the correct reward per token", async function () {         
-//         const { tokenstaked, rewardToken, owner, user1, stakingToken } = await loadFixture(deployContractNFT);
-//         await rewardToken.connect(owner).approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
+    it("It should calculate the rewards earned for an account correctly", async function () {     
+        const { StakingContract, rewardToken, owner, user1, NFTtoStake } = await loadFixture(deployContractNFT);
+        await rewardToken.connect(owner).approve(await StakingContract.getAddress(), ethers.parseUnits("1000", 18));
 
-//         // Owner should create the tokens and send them to the contract
-//         const amountToFund = ethers.parseUnits("1000", 18);
-//         await tokenstaked.fundRewards(amountToFund);
+        // Owner should create the tokens and send them to the contract
+        const amountToFund = ethers.parseUnits("1000", 18);
+        await StakingContract.fundRewards(amountToFund);
         
-//         // User must stake now and then we can test the functionality
-//         const amountToStake = ethers.parseUnits("1000", 18);
-//         await stakingToken.connect(owner).transfer(user1.address, amountToStake);
-//         await stakingToken.connect(user1).approve(await tokenstaked.getAddress(), amountToStake);
-//         await tokenstaked.connect(user1).stake(amountToStake);
-//         await time.increase(35);
+        // User must stake now and then we can test the functionality
+        const cost = await NFTtoStake.cost();
+        await NFTtoStake.connect(user1).mint(1, { value: cost });
+        await NFTtoStake.connect(user1).approve(await StakingContract.getAddress(), 1);
+        await StakingContract.connect(user1).stake(1);
+        await time.increase(40);
 
-//         const rewardPerToken = await tokenstaked.rewardPerToken();
-//         expect(rewardPerToken).to.be.greaterThanOrEqual(ethers.parseUnits("0.0035", 18));
+        const rewardsEarnedByAcc = await StakingContract.earned(user1.address);   
+        expect(rewardsEarnedByAcc).to.be.greaterThan(ethers.parseUnits("0.01111", 18));
         
-        
-//     });  
-
-//     it("It should calculate the rewards earned for an account correctly", async function () {     
-//         const { tokenstaked, rewardToken, owner, user1, stakingToken } = await loadFixture(deployContractNFT);
-//         await rewardToken.connect(owner).approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
-
-//         // Owner should create the tokens and send them to the contract
-//         const amountToFund = ethers.parseUnits("1000", 18);
-//         await tokenstaked.fundRewards(amountToFund);
-        
-//         // User must stake now and then we can test the functionality
-//         const amountToStake = ethers.parseUnits("1000", 18);
-//         await stakingToken.connect(owner).transfer(user1.address, amountToStake);
-//         await stakingToken.connect(user1).approve(await tokenstaked.getAddress(), amountToStake);
-//         await tokenstaked.connect(user1).stake(amountToStake);
-//         await time.increase(40);
-
-//         const rewardsEarnedByAcc = await tokenstaked.earned(user1.address);   
-//         expect(rewardsEarnedByAcc).to.be.greaterThan(ethers.parseUnits("0.0040", 18));
-        
-//     });  
+    });  
     
-//     it("Users should be able to withdraw their rewards only", async function () {        
-//         // Should stake and then attempt to withdraw
-//         const { tokenstaked, rewardToken, owner, user1, stakingToken } = await loadFixture(deployContractNFT);
-//         await rewardToken.connect(owner).approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
-//         await rewardToken.connect(owner).transfer(user1.address, ethers.parseUnits("10", 18));
-//         // Owner should create the tokens and send them to the contract
-//         const amountToFund = ethers.parseUnits("1000", 18);
-//         await tokenstaked.fundRewards(amountToFund);
+    it("Users should be able to withdraw their rewards only", async function () {        
+        // Should stake and then attempt to withdraw
+        const { StakingContract, rewardToken, owner, user1, NFTtoStake } = await loadFixture(deployContractNFT);
+
+        await rewardToken.connect(owner).approve(await StakingContract.getAddress(), ethers.parseUnits("1000", 18));
+        await rewardToken.connect(owner).transfer(user1.address, ethers.parseUnits("10", 18));
+
+        // Owner should create the tokens and send them to the contract
+        const cost = await NFTtoStake.cost();
+        await NFTtoStake.connect(user1).mint(1, { value: cost});
+        await NFTtoStake.connect(user1).approve(await StakingContract.getAddress(), 1);
+
+        const amountToFund = ethers.parseUnits("1000", 18);
+        await StakingContract.fundRewards(amountToFund);
         
-//         // User must stake now and then we can test the functionality
-//         const amountToStake = ethers.parseUnits("1000", 18);
-//         await stakingToken.connect(owner).transfer(user1.address, amountToStake);
-//         await stakingToken.connect(user1).approve(await tokenstaked.getAddress(), amountToStake);
-//         await tokenstaked.connect(user1).stake(amountToStake);
-//         await time.increase(40);
+        // User must stake now and then we can test the functionality
+        await StakingContract.connect(user1).stake(1);
+        await time.increase(40);
 
-//         await tokenstaked.connect(user1).getReward();
+        await StakingContract.connect(user1).getReward();
 
-//         //Expect the balance of user to be updated with the new token
-//         expect(await rewardToken.balanceOf(user1.address)).to.be.greaterThanOrEqual(ethers.parseUnits("10.0040", 18));
-//     }); 
+        //Expect the balance of user to be updated with the new token
+        expect(await rewardToken.balanceOf(user1.address)).to.be.greaterThanOrEqual(ethers.parseUnits("10.0111", 18));
+    }); 
 
-//     it("Users should be able to withdraw and get rewards simualtaneously", async function () { 
-//         const { tokenstaked, rewardToken, owner, user1, stakingToken } = await loadFixture(deployContractNFT);
-//         await rewardToken.connect(owner).approve(await tokenstaked.getAddress(), ethers.parseUnits("1000", 18));
-//         await rewardToken.connect(owner).transfer(user1.address, ethers.parseUnits("10", 18));
-//         // Owner should create the tokens and send them to the contract
-//         const amountToFund = ethers.parseUnits("1000", 18);
-//         await tokenstaked.fundRewards(amountToFund);
+    it("Users should be able to withdraw and get rewards simualtaneously", async function () { 
+        const { StakingContract, rewardToken, owner, user1, NFTtoStake } = await loadFixture(deployContractNFT);
+        await rewardToken.connect(owner).approve(await StakingContract.getAddress(), ethers.parseUnits("1000", 18));
+        await rewardToken.connect(owner).transfer(user1.address, ethers.parseUnits("10", 18));
+
+        const cost = await NFTtoStake.cost();
+        await NFTtoStake.connect(user1).mint(1, { value: cost});
+        await NFTtoStake.connect(user1).approve(await StakingContract.getAddress(), 1);
+
+        // Owner should create the tokens and send them to the contract
+        const amountToFund = ethers.parseUnits("1000", 18);
+        await StakingContract.fundRewards(amountToFund);
         
-//         // User must stake now and then we can test the functionality
-//         const amountToStake = ethers.parseUnits("1000", 18);
-//         await stakingToken.connect(owner).transfer(user1.address, amountToStake);
-//         await stakingToken.connect(user1).approve(await tokenstaked.getAddress(), amountToStake);
-//         await tokenstaked.connect(user1).stake(amountToStake);
-//         await time.increase(400);
+        // User must stake now and then we can test the functionality
+        await StakingContract.connect(user1).stake(1);
 
-//         await tokenstaked.connect(user1).withdrawAndGetReward();
+        // 400 * rewardpertoken
+        await time.increase(400);
 
-//         expect(await stakingToken.balanceOf(user1.address)).to.equal(amountToStake);
-//         expect(await rewardToken.balanceOf(user1.address)).to.be.greaterThanOrEqual(ethers.parseUnits("10.04", 18));
+        await StakingContract.connect(user1).withdrawAndClaim(1);
 
-        
-
-//     });
+        expect(await NFTtoStake.balanceOf(user1.address)).to.equal(1);
+        expect(await rewardToken.balanceOf(user1.address)).to.be.greaterThanOrEqual(ethers.parseUnits("10.1111", 18));  
+    });
 
 
-// }); 
-
-
-        
-        // // Owner mints nft for themselves - WILL USE THIS LATER
-        // await NFTtoStake.connect(owner).mint(1);
-        // expect(await NFTtoStake.ownerOf(1)).to.equal(owner.address);
-
-        // await NFTtoStake.connect(owner).transferFrom(owner.address, user1.address, 1);
-
-        // // Verify the transfer was successful by checking who owns tokenId
-        // expect(await NFTtoStake.ownerOf(1)).to.equal(user1.address);
+}); 
