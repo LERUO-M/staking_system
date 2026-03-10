@@ -40,6 +40,7 @@ contract StakingContractNFT is Ownable, ReentrancyGuard, Pausable {
         NFTsBeingStaked = IERC721(_NFTbeingStaked);
         rewardToken = IERC20(_rewardToken);
         rewardRate = _rewardRate;
+        lastUpdateTime[msg.sender] = block.timestamp;
     }
 
     // Update rewards a user has before updating block.timestamp
@@ -72,8 +73,8 @@ contract StakingContractNFT is Ownable, ReentrancyGuard, Pausable {
         emit NFTStaked(msg.sender, _tokenId);
     }
 
-    function withdraw(uint256 _tokenId) external nonReentrant updateReward(msg.sender) {
-        require(nftOwners[_tokenId] == msg.sender, "Not the owner of this staked NFT");
+    function _withdraw(uint256 _tokenId) internal {
+        require(nftOwners[_tokenId] == msg.sender, "Not the owner");
         require(block.timestamp >= nftStakingTimestamp[_tokenId] + stakingDuration, "Still locked");
         
 
@@ -89,8 +90,12 @@ contract StakingContractNFT is Ownable, ReentrancyGuard, Pausable {
         emit Unstaked(msg.sender, _tokenId);
     }   
 
+    function withdraw(uint256 _tokenId) external nonReentrant updateReward(msg.sender) {
+        _withdraw(_tokenId);
+    } 
+
     // Get reward
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function _getReward() internal {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
@@ -98,4 +103,27 @@ contract StakingContractNFT is Ownable, ReentrancyGuard, Pausable {
             emit RewardPaid(msg.sender, reward);
         }
     } 
+
+    function getReward() external nonReentrant updateReward(msg.sender) {
+        _getReward();
+    } 
+
+    // Emergency in case reward system is not working on contract runs out of RWD
+    function emergencyWithdraw(uint256 _tokenId) external nonReentrant {
+        require(nftOwners[_tokenId] == msg.sender, "Not the owner");
+        
+        totalStaked -= 1;
+        stakedBalance[msg.sender] -= 1;
+        delete nftOwners[_tokenId];
+        delete nftStakingTimestamp[_tokenId];
+
+        NFTsBeingStaked.transferFrom(address(this), msg.sender, _tokenId);
+
+        emit Unstaked(msg.sender, _tokenId);
+    }
+
+    function withdrawAndClaim(uint256 _tokenId) external nonReentrant updateReward(msg.sender) {
+        _withdraw(_tokenId);
+        _getReward();
+    }
 }
