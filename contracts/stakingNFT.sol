@@ -129,4 +129,22 @@ contract StakingContractNFT is Ownable, ReentrancyGuard, Pausable {
     function fundRewards(uint256 amount) external onlyOwner {
         rewardToken.safeTransferFrom(msg.sender, address(this), amount);
     }
+
+    // Admin functions
+    function setRewardRate(uint256 _rewardRate) external onlyOwner updateReward(address(0)) {
+        rewardRate = _rewardRate;
+    }
+
+    function setStakingDuration(uint256 _duration) external onlyOwner {
+        stakingDuration = _duration;
+    }
+
+    // Pause/Unpause staking
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
 }

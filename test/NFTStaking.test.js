@@ -274,3 +274,67 @@ describe("Running tests for the rewarding of tokens in the contract", function()
 
 
 }); 
+
+describe("Running tests for owner setting the state variables in the contract", function() {
+    it("Only the owner should be able to set the reward rate", async function () {         
+        const { StakingContract, owner } = await loadFixture(deployContractNFT);
+        const rewardRate = ethers.parseUnits("0.2", 18); // 0.2 tokens per second
+
+        await StakingContract.connect(owner).setRewardRate(rewardRate);
+        expect(await StakingContract.rewardRate()).to.equal(rewardRate);
+    
+    });
+
+    it("User should not be able to set the reward rate", async function () {         
+        const { StakingContract, owner, user1 } = await loadFixture(deployContractNFT);
+        const rewardRate = ethers.parseUnits("0.2", 18); // 0.2 tokens per second
+
+        expect(StakingContract.connect(user1).setRewardRate(rewardRate)).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Only the owner should be able to set the staking duration", async function () {         
+        const { StakingContract, owner } = await loadFixture(deployContractNFT);
+
+        const stakingTime = 34;
+        await StakingContract.connect(owner).setStakingDuration(stakingTime);
+        expect(await StakingContract.stakingDuration()).to.equal(stakingTime);
+    });
+    
+    it("User should not be able to set the staking duration", async function () {         
+        const { StakingContract, user1 } = await loadFixture(deployContractNFT);
+        const stakingTime = 34;
+
+        expect(StakingContract.connect(user1).setStakingDuration(stakingTime)).to.be.revertedWith("Ownable: caller is not the owner");
+   
+    });
+
+    it("Only the owner should be able to pause staking", async function () {         
+        const { StakingContract, owner } = await loadFixture(deployContractNFT);
+
+        await StakingContract.connect(owner).pause();
+        expect(await StakingContract.paused()).to.equal(true);
+    });
+    
+    it("User should not be able to set pause staking", async function () {         
+        const { StakingContract, owner, user1 } = await loadFixture(deployContractNFT);
+
+        expect(StakingContract.connect(user1).pause()).to.be.revertedWith("Ownable: caller is not the owner") ;        
+    });    
+
+    it("Only the owner should be able to unpause staking", async function () {         
+        const { StakingContract, owner } = await loadFixture(deployContractNFT);
+
+        await StakingContract.pause();
+        expect(await StakingContract.paused()).to.equal(true);
+
+        await StakingContract.connect(owner).unpause();
+        expect(await StakingContract.paused()).to.equal(false);
+    });
+    
+    it("User should not be able to set unpause staking", async function () {         
+        const { StakingContract, owner, user1 } = await loadFixture(deployContractNFT);
+
+        expect(StakingContract.connect(user1).unpause()).to.be.revertedWith("Ownable: caller is not the owner") ;        
+    
+    });              
+});
