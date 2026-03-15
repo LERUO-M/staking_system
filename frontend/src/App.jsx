@@ -109,63 +109,73 @@ function App() {
   };
 
   return (
-    <div style={containerStyle}>
-      <header style={headerStyle}>
-        <h1>💎 Diamond Hands Staking</h1>
+    <div style={styles.container}>
+      <header style={styles.header}>
+        <h1 style={styles.title}>💎 Diamond Mine Protocol</h1>
         {!account ? (
-          <button onClick={connectWallet} style={btnStyle}>Connect Wallet</button>
+          <button onClick={connectWallet} style={styles.connectBtn}>Connect Mining Rig</button>
         ) : (
-          <div style={addressBox}>{account.slice(0,6)}...{account.slice(-4)}</div>
+          <div style={styles.addressBox}>
+            <span style={styles.indicator}>●</span> {account.slice(0,6)}...{account.slice(-4)}
+          </div>
         )}
       </header>
 
       {account && (
-        <main style={{ marginTop: '30px' }}>
+        <main style={styles.main}>
           {/* STATS */}
-          <div style={statsGrid}>
-            <div style={statCard}>
-              <h3 style={{color: '#888'}}>Pending Rewards</h3>
-              <p style={bigNumber}>{Number(stats.earned).toFixed(6)} RWD</p>
-              <button onClick={() => contracts.staking.getReward()} style={claimBtn}>Claim Rewards</button>
+          <div style={styles.statsGrid}>
+            <div style={styles.statCard}>
+              <h3 style={styles.statLabel}>⛏️ Mining Output</h3>
+              <div style={styles.meterContainer}>
+                 <p style={styles.statValue}>{Number(stats.earned).toFixed(6)} <span style={styles.unit}>RWD</span></p>
+              </div>
+              <button onClick={() => contracts.staking.getReward()} style={styles.claimBtn}>
+                Collect Polished Diamonds 💎
+              </button>
             </div>
-            <div style={statCard}>
-              <h3 style={{color: '#888'}}>Staked NFTs</h3>
-              <p style={bigNumber}>{stats.stakedCount}</p>
-              <p style={{fontSize: '0.8rem'}}>Earning at {/* rewardRate here */} RWD/sec</p>
+            <div style={styles.statCard}>
+              <h3 style={styles.statLabel}>🏭 Active Refineries</h3>
+              <p style={styles.statValue}>{stats.stakedCount}</p>
+              <p style={styles.statSub}>Refining Efficiency: 100%</p>
             </div>
           </div>
 
           {/* MINT BOX */}
-          <div style={mintSection}>
-             <button onClick={() => contracts.nft.mint(1, {value: ethers.parseEther("0.01")})} style={actionBtn}>
-               Mint New NFT (0.01 ETH)
+          <div style={styles.mintSection}>
+             <button onClick={() => contracts.nft.mint(1, {value: ethers.parseEther("0.01")})} style={styles.mintBtn}>
+               ⛏️ Excavate New Ore (0.01 ETH)
              </button>
           </div>
 
-          <div style={dashboardGrid}>
+          <div style={styles.dashboardGrid}>
             {/* WALLET INVENTORY */}
-            <section>
-              <h2>In Your Wallet ({myNFTs.length})</h2>
-              <div style={nftGrid}>
+            <section style={styles.panel}>
+              <h2 style={styles.panelTitle}>📦 Discovered Ores ({myNFTs.length})</h2>
+              <div style={styles.gridList}>
                 {myNFTs.map(id => (
-                  <div key={id} style={nftCard}>
-                    <div style={imgPlaceholder}>NFT #{id}</div>
-                    <button onClick={() => handleStake(id)} style={stakeBtn}>Stake NFT</button>
+                  <div key={id} style={styles.oreCard}>
+                    <div style={styles.oreVisual}>Ore #{id}</div>
+                    <button onClick={() => handleStake(id)} style={styles.stakeBtn}>Start Refining ⚙️</button>
                   </div>
                 ))}
+                {myNFTs.length === 0 && <p style={styles.emptyText}>No ores found in inventory.</p>}
               </div>
             </section>
 
             {/* STAKED VAULT */}
-            <section>
-              <h2>Staked in Vault ({stakedIDs.length})</h2>
-              <div style={nftGrid}>
+            <section style={styles.panel}>
+              <h2 style={styles.panelTitle}>🔥 The Refinery ({stakedIDs.length})</h2>
+              <div style={styles.gridList}>
                 {stakedIDs.map(id => (
-                  <div key={id} style={nftCard}>
-                    <div style={{...imgPlaceholder, backgroundColor: '#d4edda'}}>Staked #{id}</div>
-                    <button onClick={() => handleUnstake(id)} style={unstakeBtn}>Unstake</button>
+                  <div key={id} style={styles.refineryCard}>
+                    <div style={styles.refineryVisual}>
+                        <span style={styles.pulse}>●</span> Refining #{id}
+                    </div>
+                    <button onClick={() => handleUnstake(id)} style={styles.unstakeBtn}>Extract Gem 💎</button>
                   </div>
                 ))}
+                {stakedIDs.length === 0 && <p style={styles.emptyText}>Refinery is currently idle.</p>}
               </div>
             </section>
           </div>
@@ -176,21 +186,239 @@ function App() {
 }
 
 /** STYLES **/
-const containerStyle = { fontFamily: 'Inter, sans-serif', padding: '40px', backgroundColor: '#f0f2f5', minHeight: '100vh', color: '#1c1e21' };
-const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '20px' };
-const btnStyle = { padding: '12px 24px', borderRadius: '10px', cursor: 'pointer', backgroundColor: '#007bff', color: 'white', border: 'none', fontWeight: 'bold' };
-const addressBox = { padding: '10px 15px', backgroundColor: '#fff', border: '1px solid #ddd', borderRadius: '10px', fontWeight: '500' };
-const statsGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' };
-const statCard = { backgroundColor: 'white', padding: '25px', borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center' };
-const bigNumber = { fontSize: '2.5rem', fontWeight: '800', margin: '15px 0', color: '#1a1a1a' };
-const claimBtn = { backgroundColor: '#28a745', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' };
-const mintSection = { textAlign: 'center', margin: '40px 0' };
-const actionBtn = { padding: '15px 40px', fontSize: '1rem', borderRadius: '12px', cursor: 'pointer', border: '1px solid #007bff', backgroundColor: 'transparent', color: '#007bff', fontWeight: 'bold' };
-const dashboardGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' };
-const nftGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '15px' };
-const nftCard = { backgroundColor: 'white', padding: '15px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' };
-const imgPlaceholder = { height: '100px', backgroundColor: '#e9ecef', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', marginBottom: '10px' };
-const stakeBtn = { width: '100%', padding: '8px', borderRadius: '6px', border: 'none', backgroundColor: '#007bff', color: 'white', cursor: 'pointer' };
-const unstakeBtn = { width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #dc3545', color: '#dc3545', backgroundColor: 'transparent', cursor: 'pointer' };
+const styles = {
+  container: {
+    fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    padding: '40px',
+    backgroundColor: '#1a1a1a', // Deep Mine Slate
+    minHeight: '100vh',
+    color: '#e0e0e0',
+    backgroundImage: 'radial-gradient(circle at 50% 0%, #2a2a2a 0%, #1a1a1a 100%)'
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid #333',
+    paddingBottom: '20px',
+    marginBottom: '40px'
+  },
+  title: {
+    fontSize: '2rem',
+    background: 'linear-gradient(45deg, #00d4ff, #2ecc71)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    margin: 0,
+    textTransform: 'uppercase',
+    letterSpacing: '2px'
+  },
+  connectBtn: {
+    padding: '12px 24px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    backgroundColor: 'transparent',
+    color: '#00d4ff',
+    border: '1px solid #00d4ff',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    transition: 'all 0.3s ease'
+  },
+  addressBox: {
+    padding: '10px 20px',
+    backgroundColor: '#252525',
+    border: '1px solid #333',
+    borderRadius: '4px',
+    fontWeight: '500',
+    color: '#00d4ff',
+    fontFamily: 'monospace',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px'
+  },
+  indicator: {
+    color: '#2ecc71',
+    fontSize: '1.2rem'
+  },
+  main: {
+    maxWidth: '1200px',
+    margin: '0 auto'
+  },
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gap: '20px',
+    marginBottom: '40px'
+  },
+  statCard: {
+    backgroundColor: '#252525',
+    padding: '30px',
+    borderRadius: '8px',
+    border: '1px solid #333',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+    textAlign: 'center',
+    position: 'relative',
+    overflow: 'hidden'
+  },
+  statLabel: {
+    color: '#888',
+    textTransform: 'uppercase',
+    fontSize: '0.8rem',
+    letterSpacing: '1px',
+    marginBottom: '10px'
+  },
+  statValue: {
+    fontSize: '3rem',
+    fontWeight: '800',
+    margin: '10px 0',
+    color: '#fff',
+    textShadow: '0 0 10px rgba(0, 212, 255, 0.3)'
+  },
+  unit: {
+    fontSize: '1rem',
+    color: '#00d4ff'
+  },
+  statSub: {
+    color: '#2ecc71',
+    fontSize: '0.9rem',
+    marginTop: '5px'
+  },
+  claimBtn: {
+    backgroundColor: '#2ecc71', // Emerald Green
+    color: '#1a1a1a',
+    border: 'none',
+    padding: '12px 30px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    marginTop: '10px',
+    boxShadow: '0 0 15px rgba(46, 204, 113, 0.4)'
+  },
+  mintSection: {
+    textAlign: 'center',
+    marginBottom: '50px',
+    padding: '40px',
+    backgroundColor: 'rgba(0, 212, 255, 0.05)',
+    borderRadius: '12px',
+    border: '1px dashed #00d4ff'
+  },
+  mintBtn: {
+    padding: '15px 50px',
+    fontSize: '1.2rem',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    border: '2px solid #00d4ff',
+    backgroundColor: '#00d4ff',
+    color: '#1a1a1a',
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    boxShadow: '0 0 20px rgba(0, 212, 255, 0.5)'
+  },
+  dashboardGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+    gap: '40px'
+  },
+  panel: {
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    padding: '20px',
+    borderRadius: '12px'
+  },
+  panelTitle: {
+    borderBottom: '2px solid #333',
+    paddingBottom: '10px',
+    marginBottom: '20px',
+    color: '#fff',
+    fontSize: '1.5rem',
+    textTransform: 'uppercase',
+    letterSpacing: '1px'
+  },
+  gridList: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+    gap: '20px'
+  },
+  oreCard: {
+    backgroundColor: '#2a2a2a',
+    padding: '15px',
+    borderRadius: '4px',
+    border: '1px solid #444',
+    transition: 'transform 0.2s',
+    position: 'relative',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+  },
+  oreVisual: {
+    height: '100px',
+    backgroundColor: '#1f1f1f',
+    borderRadius: '2px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold',
+    marginBottom: '15px',
+    border: '1px solid #333',
+    color: '#555',
+    fontSize: '1.2rem'
+  },
+  refineryCard: {
+    backgroundColor: '#2a2a2a',
+    padding: '15px',
+    borderRadius: '4px',
+    border: '1px solid #2ecc71', // Green border for active
+    position: 'relative',
+    boxShadow: '0 0 15px rgba(46, 204, 113, 0.1)'
+  },
+  refineryVisual: {
+    height: '100px',
+    backgroundColor: 'rgba(46, 204, 113, 0.05)',
+    borderRadius: '2px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold',
+    marginBottom: '15px',
+    border: '1px dashed #2ecc71',
+    color: '#2ecc71',
+    flexDirection: 'column',
+    gap: '5px'
+  },
+  pulse: {
+    animation: 'pulse 2s infinite',
+    color: '#2ecc71'
+  },
+  stakeBtn: {
+    width: '100%',
+    padding: '10px',
+    borderRadius: '2px',
+    border: 'none',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    fontSize: '0.8rem',
+    backgroundColor: '#00d4ff',
+    color: '#000'
+  },
+  unstakeBtn: {
+    width: '100%',
+    padding: '10px',
+    borderRadius: '2px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    fontSize: '0.8rem',
+    backgroundColor: 'transparent',
+    border: '1px solid #2ecc71',
+    color: '#2ecc71'
+  },
+  emptyText: {
+    color: '#555',
+    fontStyle: 'italic',
+    gridColumn: '1 / -1',
+    textAlign: 'center',
+    padding: '20px'
+  }
+};
 
 export default App;
